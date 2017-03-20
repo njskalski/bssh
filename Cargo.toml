@@ -1,0 +1,4 @@
+[package]
+name = "bssh"
+version = "0.0.1"
+authors = [ "Andrzej J Skalski" ]
