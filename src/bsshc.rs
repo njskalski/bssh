@@ -2,7 +2,7 @@ use std::{env, error};
 use std::io::prelude::*;
 use std::net::TcpStream;
 
-use version;
+mod version;
 
 const HOST: &'static str = "127.0.0.1:5555";
 
@@ -19,7 +19,7 @@ fn send_one_command(command: &Vec<u8>) -> Result<String, Box<error::Error + Send
 }
 
 fn main() {
-    let hello : Vec<u8> = version::get_version_byte_string() + b"\r\n".to_vec();
+    let hello : Vec<u8> = [version::get_version_byte_string(),  b"\r\n".to_vec()].concat();
 
     match send_one_command(&hello) {
         Ok(response) => println!("{}", response),
