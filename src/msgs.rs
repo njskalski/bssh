@@ -15,7 +15,7 @@ pub fn read_welcome_string(stream : TcpStream, allow_comments : bool) -> Result<
         stream.read_exact(&mut buf);
         let line = match buf.find("\r\n") {
             None => panic!(bssh_err::BSSH_ERR_NO_DELIMITER_FOUND),
-            Some(idx) => buf[0:idx].to_vec()
+            Some(idx) => buf[..idx].to_vec()
         };
         break
     }
