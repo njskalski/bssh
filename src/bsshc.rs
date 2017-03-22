@@ -5,6 +5,7 @@ use std::net::Shutdown;
 
 mod version;
 mod msgs;
+mod bssh_err;
 
 const HOST: &'static str = "127.0.0.1:5555";
 

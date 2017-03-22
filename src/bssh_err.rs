@@ -1,1 +1,3 @@
-pub let BSSH_ERR_NO_DELIMITER_FOUND = "Error while parsing initial message: no delimiter found."
+pub mod bssh_err {
+    pub const BSSH_ERR_NO_DELIMITER_FOUND : String = "Error while parsing initial message: no delimiter found.";
+}
