@@ -2,7 +2,7 @@ use std::{env, error};
 use std::net::TcpStream;
 use std::io::Read;
 
-mod bssh_err;
+use bssh_err;
 
 const buffer_length : u32 = 255;
 
