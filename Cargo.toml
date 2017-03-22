@@ -10,3 +10,6 @@ path = "src/bsshc.rs"
 [[bin]]
 name = "bsshd"
 path = "src/bsshd.rs"
+
+[dependencies]
+regex = "0.2"

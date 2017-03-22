@@ -3,6 +3,8 @@ use std::io::prelude::*;
 use std::net::TcpStream;
 use std::net::Shutdown;
 
+extern crate regex;
+
 mod version;
 mod msgs;
 mod bssh_err;
