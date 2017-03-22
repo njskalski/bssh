@@ -3,13 +3,9 @@ name = "bssh"
 version = "0.0.1"
 authors = [ "Andrzej J Skalski" ]
 
-[[bin]]
-name = "bsshc"
-path = "src/bsshc.rs"
-
-[[bin]]
-name = "bsshd"
-path = "src/bsshd.rs"
+[lib]
+name = "bsshlib"
+path = "src/lib.rs"
 
 [dependencies]
 regex = "0.2"

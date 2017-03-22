@@ -5,7 +5,8 @@ use std::net::TcpStream;
 use std::net::Shutdown;
 use std::thread;
 
-mod version;
+extern crate bsshlib;
+use bsshlib::version;
 
 const HOST: &'static str = "127.0.0.1:5555";
 
