@@ -12,6 +12,11 @@ const HOST: &'static str = "127.0.0.1:5555";
 fn handle_client(mut stream: TcpStream) {
     let mut buf;
     loop {
+
+        let hello : Vec<u8> = [version::get_version_byte_string(),  b"\r\n".to_vec()].concat();
+
+        stream.write_all(&hello);
+
         // clear out the buffer so we don't send garbage
         buf = [0; 512];
         let num = match stream.read(&mut buf) {
