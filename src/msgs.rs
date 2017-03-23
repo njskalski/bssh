@@ -16,8 +16,12 @@ pub fn read_welcome_string(stream : &mut Read, allow_comments : bool) -> Result<
     buf.reserve(max_buffer_length + 1); // +1 so I can add first, and then check if len() > max_buffer_length
 
     loop {
-        let mut byte_buf = [0 as u8; 1];
-        stream.read_exact(&mut byte_buf);
+        let mut byte_buf = [0 as u8; 1];        
+        match stream.read_exact(&mut byte_buf) {
+            Err(e) => return Err("nie udalo sie".to_string()), //TODO!!!
+            Ok(_) => ()
+        };
+
         buf.push(byte_buf[0]);
 
         //protocol specifies '\r\n' as end of line
@@ -70,6 +74,8 @@ mod tests {
                 Err(Error::new(ErrorKind::BrokenPipe, "")) //TODO ok errorkind?
             } else {
                 copy(&mut self.input[self.pos..(self.pos+buf.len())].as_ref(), &mut buf);
+                self.pos += buf.len();
+                println!("{:?}", self.pos);
                 Ok(())
             }
         }
