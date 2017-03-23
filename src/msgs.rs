@@ -77,6 +77,7 @@ mod tests {
         fn read(&mut self, buf: &mut [u8]) -> Result<usize> { Ok(0) }
     }
 
+    #[test]
     fn test_read_welcome_string_accepts_simple_string() {
         let input = b"SSH-2.0-hello-world\r\n".to_vec();
         let mut ms = MockStream { input : input, pos : 0 };
