@@ -1,23 +1,25 @@
+use std::error;
 use std::io::Write;
 use std::io::Read;
 use std::net::TcpListener;
 use std::net::TcpStream;
-use std::net::Shutdown;
+// use std::net::Shutdown;
 use std::thread;
 
 extern crate bsshlib;
 use bsshlib::version;
+use bsshlib::msgs;
 
 const HOST: &'static str = "127.0.0.1:5555";
 
-fn handle_client(mut stream: TcpStream) {
+fn handle_client(mut stream: TcpStream) -> Result<(), Box<error::Error + Send + Sync>> {
+    let hello : Vec<u8> = [version::get_version_byte_string(),  b"\r\n".to_vec()].concat();
+    try!(stream.write_all(&hello));
+
+    msgs::read_welcome_string(&mut stream, false);
+
     let mut buf;
     loop {
-
-        let hello : Vec<u8> = [version::get_version_byte_string(),  b"\r\n".to_vec()].concat();
-
-        stream.write_all(&hello);
-
         // clear out the buffer so we don't send garbage
         buf = [0; 512];
         let num = match stream.read(&mut buf) {
@@ -41,6 +43,7 @@ fn handle_client(mut stream: TcpStream) {
             Ok(_) => continue,
         }
     }
+    Ok(())
 }
 
 fn main() {
