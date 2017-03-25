@@ -2,7 +2,6 @@
 use std::net::TcpStream;
 use std::io::Read;
 
-use regex::bytes::Regex;
 use bssh_err;
 
 const max_buffer_length : usize = 255; //RFC 4253 page 5
@@ -11,15 +10,14 @@ const max_comments_lines : usize = 10; //TODO arbitrary value
 pub fn read_welcome_string(stream : &mut Read, allow_comments : bool) -> Result<Vec<String>, String> {
     let mut buf : Vec<u8> = Vec::new();
     let mut res : Vec<String> = Vec::new();
-    let eol = Regex::new(r"\r\n").unwrap();
 
     buf.reserve(max_buffer_length + 1); // +1 so I can add first, and then check if len() > max_buffer_length
 
     loop {
-        let mut byte_buf = [0 as u8; 1];        
+        let mut byte_buf = [0 as u8; 1];
         match stream.read_exact(&mut byte_buf) {
             Err(e) => return Err("nie udalo sie".to_string()), //TODO!!!
-            Ok(_) => ()
+            Ok(_) => {}
         };
 
         buf.push(byte_buf[0]);
@@ -27,7 +25,7 @@ pub fn read_welcome_string(stream : &mut Read, allow_comments : bool) -> Result<
         //protocol specifies '\r\n' as end of line
         if buf.len() >= 2 && buf[buf.len()-2] == '\r' as u8 && buf[buf.len()-1] == '\n' as u8 {
 
-            let line_str : String = match String::from_utf8(buf) {
+            let line_str : String = match String::from_utf8(buf[..buf.len()-2].to_vec()) {
                 Err(_) => panic!(bssh_err::BSSH_ERR_NOT_UTF8_STRING),
                 Ok(s) => s
             };
@@ -73,14 +71,20 @@ mod tests {
             if buf.len() > (self.input.len() - self.pos) {
                 Err(Error::new(ErrorKind::BrokenPipe, "")) //TODO ok errorkind?
             } else {
-                copy(&mut self.input[self.pos..(self.pos+buf.len())].as_ref(), &mut buf);
+                // println!("{:?}", buf.len());
+                // println!("{:?}", self.input[self.pos..(self.pos+buf.len())].as_ref());
+                // copy(&mut self.input[self.pos..(self.pos+buf.len())].as_ref(), &mut buf);
+                for i in 0..buf.len() {
+                    buf[i] = self.input[self.pos + i];
+                };
+                // println!("{:?}", buf.len());
                 self.pos += buf.len();
-                println!("{:?}", self.pos);
+                // println!("pos = {:?}", self.pos);
                 Ok(())
             }
         }
 
-        fn read(&mut self, buf: &mut [u8]) -> Result<usize> { Ok(0) }
+        fn read(&mut self, buf: &mut [u8]) -> Result<usize> { println!("deamn!"); Ok(0) }
     }
 
     #[test]
