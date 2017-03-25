@@ -19,10 +19,9 @@ fn connect() -> Result<(), Box<error::Error + Send + Sync>> {
     let mut stream = try!(TcpStream::connect(HOST));
     try!(stream.write_all(&hello));
 
-    let mut response = String::new();
-    stream.read_to_string(&mut response);
+    msgs::read_welcome_string(&mut stream, true);
+
     stream.shutdown(Shutdown::Both).expect("shutdown call failed");
-    println!("{:?}", response);
 
     Ok(())
 }
