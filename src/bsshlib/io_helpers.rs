@@ -45,7 +45,6 @@ mod tests {
     use super::*;
     use std::io::*;
     use errors;
-    use std::cmp::PartialEq;
 
     struct MockReadStream {
         input : Vec<u8>,
@@ -120,7 +119,7 @@ mod tests {
     fn read_string_does_not_overflow() {
         let hello_string : Vec<u8> = vec![255, 255, 255, 255, b'h', b'e', b'l', b'l', b'o'];
         let mut mrs = MockReadStream::new(hello_string);
-        assert!(read_string(&mut mrs, None).is_err());
+        assert_eq!(read_string(&mut mrs, None).unwrap_err(), Err(Error::new(ErrorKind::Other, errors::BSSH_ERR_BUFFER_CAPACITY_EXCEEDED)));
 
     }
 }
