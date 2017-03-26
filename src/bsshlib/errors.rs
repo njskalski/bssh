@@ -7,3 +7,4 @@ pub const BSSH_ERR_TOO_MANY_COMMENT_LINES           : &'static str = "Error whil
 pub const BSSH_ERR_CONNECTION_ENDED_UNEXPECTEDLY    : &'static str = "Connection ended unexpectedly.";
 
 pub const BSSH_ERR_BUFFER_CAPACITY_EXCEEDED         : &'static str = "Buffer capacity exceeded.";
+pub const BSSH_ERR_MALFORMED_NAME_LIST              : &'static str = "Malformed name list.";
