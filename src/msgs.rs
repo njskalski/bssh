@@ -89,6 +89,9 @@ mod tests {
         let mut ms = MockStream { input : input, pos : 0 };
 
         assert_eq!(read_welcome_string(&mut ms, false), Ok(vec!("SSH-2.0-hello-world".to_string())));
+
+        ms.pos = 0;
+
         assert_eq!(read_welcome_string(&mut ms, true), Ok(vec!("SSH-2.0-hello-world".to_string())));
     }
 
@@ -98,6 +101,9 @@ mod tests {
         let mut ms = MockStream { input : input, pos : 0 };
 
         assert_eq!(read_welcome_string(&mut ms, false), Err(bssh_err::BSSH_ERR_EXPECTED_HEADER_STRING));
+
+        ms.pos = 0;
+
         assert_eq!(read_welcome_string(&mut ms, true), Ok(vec!("Hello".to_string(), "World".to_string(), "SSH-2.0-hello-world".to_string())));
     }
 
@@ -145,6 +151,7 @@ mod tests {
     fn read_welcome_string_handles_comment_overflow() {
         let mut msic = MockStreamInfitniteComment { pos : 0 };
         assert_eq!(read_welcome_string(&mut msic, false), Err(bssh_err::BSSH_ERR_EXPECTED_HEADER_STRING));
+        msic.pos = 0;
         assert_eq!(read_welcome_string(&mut msic, true), Err(bssh_err::BSSH_ERR_TOO_MANY_COMMENT_LINES));
     }
 
