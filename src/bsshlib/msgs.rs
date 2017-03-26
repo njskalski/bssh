@@ -1,4 +1,4 @@
-use std::io::{Error, Read, Write};
+use std::io::{Error, ErrorKind, Read, Write};
 use rand;
 use config;
 use errors;
@@ -8,7 +8,7 @@ use io_helpers;
 const MAX_BUFFER_LENGTH : usize = 255; //RFC 4253 page 5
 const MAX_COMMENT_LINES : usize = 10; //TODO arbitrary value
 
-pub fn read_welcome_string(stream : &mut Read, allow_comments : bool) -> Result<Vec<String>, &str> {
+pub fn read_welcome_string(stream : &mut Read, allow_comments : bool) -> Result<Vec<String>, Error> {
     let mut buf : Vec<u8> = Vec::new();
     let mut res : Vec<String> = Vec::new();
 
@@ -16,10 +16,7 @@ pub fn read_welcome_string(stream : &mut Read, allow_comments : bool) -> Result<
 
     loop {
         let mut byte_buf = [0 as u8; 1];
-        match stream.read_exact(&mut byte_buf) {
-            Err(_) => return Err(errors::BSSH_ERR_CONNECTION_ENDED_UNEXPECTEDLY),
-            Ok(_) => {}
-        };
+        stream.read_exact(&mut byte_buf)?;
 
         buf.push(byte_buf[0]);
 
@@ -27,7 +24,7 @@ pub fn read_welcome_string(stream : &mut Read, allow_comments : bool) -> Result<
         if buf.len() >= 2 && buf[buf.len()-2] == b'\r' && buf[buf.len()-1] == b'\n' {
 
             let line_str : String = match String::from_utf8(buf[..buf.len()-2].to_vec()) {
-                Err(_) => return Err(errors::BSSH_ERR_NOT_UTF8_STRING),
+                Err(_) => return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_ERR_NOT_UTF8_STRING)),
                 Ok(s) => s
             };
 
@@ -38,17 +35,17 @@ pub fn read_welcome_string(stream : &mut Read, allow_comments : bool) -> Result<
                 break;
             } else {
                 if !allow_comments {
-                    return Err(errors::BSSH_ERR_EXPECTED_HEADER_STRING);
+                    return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_ERR_EXPECTED_HEADER_STRING));
                 };
 
                 if res.len() > MAX_COMMENT_LINES {
-                    return Err(errors::BSSH_ERR_TOO_MANY_COMMENT_LINES);
+                    return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_ERR_TOO_MANY_COMMENT_LINES));
                 };
             };
 
         } else {
             if buf.len() > MAX_BUFFER_LENGTH {
-                return Err(errors::BSSH_ERR_NO_LINE_TERMINATION_FOUND);
+                return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_ERR_NO_LINE_TERMINATION_FOUND));
             }
         };
     };
@@ -113,11 +110,9 @@ mod tests {
         let input = b"SSH-2.0-hello-world\r\n".to_vec();
         let mut ms = MockStream { input : input, pos : 0 };
 
-        assert_eq!(read_welcome_string(&mut ms, false), Ok(vec!("SSH-2.0-hello-world".to_string())));
-
+        assert_eq!(read_welcome_string(&mut ms, false).unwrap(), vec!("SSH-2.0-hello-world".to_string()));
         ms.pos = 0;
-
-        assert_eq!(read_welcome_string(&mut ms, true), Ok(vec!("SSH-2.0-hello-world".to_string())));
+        assert_eq!(read_welcome_string(&mut ms, true).unwrap(), vec!("SSH-2.0-hello-world".to_string()));
     }
 
     #[test]
@@ -125,11 +120,9 @@ mod tests {
         let input = b"Hello\r\nWorld\r\nSSH-2.0-hello-world\r\n".to_vec();
         let mut ms = MockStream { input : input, pos : 0 };
 
-        assert_eq!(read_welcome_string(&mut ms, false), Err(errors::BSSH_ERR_EXPECTED_HEADER_STRING));
-
+        assert!(read_welcome_string(&mut ms, false).is_err());
         ms.pos = 0;
-
-        assert_eq!(read_welcome_string(&mut ms, true), Ok(vec!("Hello".to_string(), "World".to_string(), "SSH-2.0-hello-world".to_string())));
+        assert_eq!(read_welcome_string(&mut ms, true).unwrap(), vec!("Hello".to_string(), "World".to_string(), "SSH-2.0-hello-world".to_string()));
     }
 
     struct MockStreamInfitnite {}
@@ -148,8 +141,8 @@ mod tests {
     #[test]
     fn read_welcome_string_handles_overflow() {
         let mut msi = MockStreamInfitnite {};
-        assert_eq!(read_welcome_string(&mut msi, false), Err(errors::BSSH_ERR_NO_LINE_TERMINATION_FOUND));
-        assert_eq!(read_welcome_string(&mut msi, true), Err(errors::BSSH_ERR_NO_LINE_TERMINATION_FOUND));
+        assert!(read_welcome_string(&mut msi, false).is_err());
+        assert!(read_welcome_string(&mut msi, true).is_err());
     }
 
     struct MockStreamInfitniteComment { pos : u8 }
@@ -175,9 +168,9 @@ mod tests {
     #[test]
     fn read_welcome_string_handles_comment_overflow() {
         let mut msic = MockStreamInfitniteComment { pos : 0 };
-        assert_eq!(read_welcome_string(&mut msic, false), Err(errors::BSSH_ERR_EXPECTED_HEADER_STRING));
+        assert!(read_welcome_string(&mut msic, false).is_err());
         msic.pos = 0;
-        assert_eq!(read_welcome_string(&mut msic, true), Err(errors::BSSH_ERR_TOO_MANY_COMMENT_LINES));
+        assert!(read_welcome_string(&mut msic, true).is_err());
     }
 
 }
