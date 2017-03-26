@@ -1,6 +1,9 @@
-use std::io::Read;
-
+use std::io::{Error, Read, Write};
+use rand;
+use config;
 use errors;
+use numbers;
+use io_helpers;
 
 const MAX_BUFFER_LENGTH : usize = 255; //RFC 4253 page 5
 const MAX_COMMENT_LINES : usize = 10; //TODO arbitrary value
@@ -51,6 +54,30 @@ pub fn read_welcome_string(stream : &mut Read, allow_comments : bool) -> Result<
     };
 
     Ok(res)
+}
+
+pub fn write_kex_init_message(stream : &mut Write, config : &config::CommonConfig) -> Result<(), Error> {
+    stream.write(&[numbers::SSH_MSG_KEXINIT])?;
+
+    let cookie : [u8; 16] = rand::random::<[u8; 16]>();
+    stream.write(&cookie)?;
+
+    let kex_algorithms = config.get_available_kex_algorithms();
+    io_helpers::write_name_list(stream, &kex_algorithms)?;
+
+    let server_host_key_algorithms = config.get_available_host_key_algorithms();
+    io_helpers::write_name_list(stream, &server_host_key_algorithms)?;
+
+    let encryption_algorithms = config.get_available_encryption_algorithms();
+    io_helpers::write_name_list(stream, &encryption_algorithms)?;
+    io_helpers::write_name_list(stream, &encryption_algorithms)?;
+
+    let mac_algorithms = config.get_available_mac_algorithms();
+    io_helpers::write_name_list(stream, &mac_algorithms)?;
+    io_helpers::write_name_list(stream, &mac_algorithms)?;
+
+
+    Ok(())
 }
 
 #[cfg(test)]

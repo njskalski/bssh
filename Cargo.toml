@@ -9,3 +9,4 @@ path = "src/bsshlib/lib.rs"
 
 [dependencies]
 byteorder = "1"
+rand = "0.3" #TODO to be removed

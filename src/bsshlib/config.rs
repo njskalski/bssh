@@ -1,8 +1,11 @@
 pub trait CommonConfig {
-    fn get_supported_mac_algorithms() -> Vec<&'static str>;
-    fn get_supported_key_exchange_methods() -> Vec<&'static str>;
-    fn get_supported_compression_methods() -> Vec<&'static str>;
-    fn get_supported_key_certificate_formats() -> Vec<&'static str>;
+    fn get_available_kex_algorithms(&self) -> Vec<&'static str>;
+    fn get_available_host_key_algorithms(&self) -> Vec<&'static str>;
+    fn get_available_encryption_algorithms(&self) -> Vec<&'static str>;    
+    fn get_available_mac_algorithms(&self) -> Vec<&'static str>;
+
+    fn get_available_compression_methods(&self) -> Vec<&'static str>;
+    fn get_available_languages(&self) -> Vec<&'static str>;
 }
 
 pub trait ClientConfig {

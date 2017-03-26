@@ -1,4 +1,5 @@
 extern crate byteorder;
+extern crate rand;
 
 pub mod version;
 pub mod numbers;
