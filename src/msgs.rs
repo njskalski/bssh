@@ -1,22 +1,20 @@
-// use std::error;
-use std::net::TcpStream;
 use std::io::Read;
 
 use bssh_err;
 
-const max_buffer_length : usize = 255; //RFC 4253 page 5
-const max_comments_lines : usize = 10; //TODO arbitrary value
+const MAX_BUFFER_LENGTH : usize = 255; //RFC 4253 page 5
+const MAX_COMMENT_LINES : usize = 10; //TODO arbitrary value
 
 pub fn read_welcome_string(stream : &mut Read, allow_comments : bool) -> Result<Vec<String>, &str> {
     let mut buf : Vec<u8> = Vec::new();
     let mut res : Vec<String> = Vec::new();
 
-    buf.reserve(max_buffer_length + 1); // +1 so I can add first, and then check if len() > max_buffer_length
+    buf.reserve(MAX_BUFFER_LENGTH + 1); // +1 so I can add first, and then check if len() > MAX_BUFFER_LENGTH
 
     loop {
         let mut byte_buf = [0 as u8; 1];
         match stream.read_exact(&mut byte_buf) {
-            Err(e) => return Err(bssh_err::BSSH_ERR_CONNECTION_ENDED_UNEXPECTEDLY),
+            Err(_) => return Err(bssh_err::BSSH_ERR_CONNECTION_ENDED_UNEXPECTEDLY),
             Ok(_) => {}
         };
 
@@ -40,13 +38,13 @@ pub fn read_welcome_string(stream : &mut Read, allow_comments : bool) -> Result<
                     return Err(bssh_err::BSSH_ERR_EXPECTED_HEADER_STRING);
                 };
 
-                if res.len() > max_comments_lines {
+                if res.len() > MAX_COMMENT_LINES {
                     return Err(bssh_err::BSSH_ERR_TOO_MANY_COMMENT_LINES);
                 };
             };
 
         } else {
-            if buf.len() > max_buffer_length {
+            if buf.len() > MAX_BUFFER_LENGTH {
                 return Err(bssh_err::BSSH_ERR_NO_LINE_TERMINATION_FOUND);
             }
         };
@@ -80,7 +78,7 @@ mod tests {
             }
         }
 
-        fn read(&mut self, buf: &mut [u8]) -> Result<usize> { panic!(); }
+        fn read(&mut self, _: &mut [u8]) -> Result<usize> { panic!(); }
     }
 
     #[test]
@@ -117,7 +115,7 @@ mod tests {
             Ok(())
         }
 
-        fn read(&mut self, buf: &mut [u8]) -> Result<usize> { panic!(); }
+        fn read(&mut self, _: &mut [u8]) -> Result<usize> { panic!(); }
     }
 
     #[test]
@@ -144,7 +142,7 @@ mod tests {
             Ok(())
         }
 
-        fn read(&mut self, buf: &mut [u8]) -> Result<usize> { panic!(); }
+        fn read(&mut self, _: &mut [u8]) -> Result<usize> { panic!(); }
     }
 
     #[test]

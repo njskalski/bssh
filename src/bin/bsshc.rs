@@ -1,4 +1,4 @@
-use std::{env, error};
+use std::error;
 use std::io::prelude::*;
 use std::net::TcpStream;
 use std::net::Shutdown;
@@ -8,7 +8,7 @@ extern crate bsshlib;
 
 use bsshlib::version;
 use bsshlib::msgs;
-use bsshlib::bssh_err;
+// use bsshlib::bssh_err;
 
 const HOST: &'static str = "127.0.0.1:5555";
 
