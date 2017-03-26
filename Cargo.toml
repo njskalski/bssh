@@ -5,7 +5,6 @@ authors = [ "Andrzej J Skalski" ]
 
 [lib]
 name = "bsshlib"
-path = "src/lib.rs"
+path = "src/bsshlib/lib.rs"
 
 [dependencies]
-regex = "0.2"
