@@ -5,3 +5,5 @@ pub const BSSH_ERR_EXPECTED_HEADER_STRING           : &'static str = "Error whil
 pub const BSSH_ERR_TOO_MANY_COMMENT_LINES           : &'static str = "Error while parsing initial message: too many additional (comment) lines.";
 
 pub const BSSH_ERR_CONNECTION_ENDED_UNEXPECTEDLY    : &'static str = "Connection ended unexpectedly.";
+
+pub const BSSH_ERR_BUFFER_CAPACITY_EXCEEDED         : &'static str = "Buffer capacity exceeded.";

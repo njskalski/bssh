@@ -8,3 +8,4 @@ name = "bsshlib"
 path = "src/bsshlib/lib.rs"
 
 [dependencies]
+byteorder = "1"
