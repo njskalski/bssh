@@ -13,7 +13,7 @@ use bsshlib::msgs;
 const HOST: &'static str = "127.0.0.1:5555";
 
 fn handle_client(mut stream: TcpStream) -> Result<(), Box<error::Error + Send + Sync>> {
-    let hello : Vec<u8> = [version::get_version_byte_string(),  b"\r\n".to_vec()].concat();
+    let hello: Vec<u8> = [version::get_version_byte_string(), b"\r\n".to_vec()].concat();
     try!(stream.write_all(&hello));
 
     msgs::read_welcome_string(&mut stream, false);
@@ -31,7 +31,7 @@ fn handle_client(mut stream: TcpStream) -> Result<(), Box<error::Error + Send + 
                     break;
                 }
                 m
-            },
+            }
         };
 
         let mut vbuf = buf.to_vec();
@@ -50,11 +50,9 @@ fn main() {
     let listener = TcpListener::bind(HOST).unwrap();
     for stream in listener.incoming() {
         match stream {
-            Err(e) => { println!("failed: {}", e) }
+            Err(e) => println!("failed: {}", e),
             Ok(stream) => {
-                thread::spawn(move || {
-                    handle_client(stream)
-                });
+                thread::spawn(move || handle_client(stream));
             }
         }
     }
