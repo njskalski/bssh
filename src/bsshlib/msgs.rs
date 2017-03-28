@@ -136,16 +136,18 @@ pub fn read_kex_init_message(stream : &mut Read) -> Result<config::KexMessage, E
 	
 	let kex_message = config::KexMessage {
 		cookie : cookie,
-		kex_algorithms : kex_algorithms,
-		server_host_key_algorithms : server_host_key_algorithms,
-		encryption_algorithms_client_to_server : encryption_algorithms_client_to_server,
-		encryption_algorithms_server_to_client : encryption_algorithms_server_to_client,
-		mac_algorithms_client_to_server : mac_algorithms_client_to_server,
-		mac_algorithms_server_to_client : mac_algorithms_server_to_client,
-		compression_algorithms_client_to_server : compression_algorithms_client_to_server,
-		compression_algorithms_server_to_client : compression_algorithms_server_to_client,
-		languages_client_to_server : languages_client_to_server,
-		languages_server_to_client : languages_server_to_client,
+		available_algorithm_set : config::AvailableAlgorithmSet {
+			kex_algorithms : kex_algorithms,
+			server_host_key_algorithms : server_host_key_algorithms,
+			encryption_algorithms_client_to_server : encryption_algorithms_client_to_server,
+			encryption_algorithms_server_to_client : encryption_algorithms_server_to_client,
+			mac_algorithms_client_to_server : mac_algorithms_client_to_server,
+			mac_algorithms_server_to_client : mac_algorithms_server_to_client,
+			compression_algorithms_client_to_server : compression_algorithms_client_to_server,
+			compression_algorithms_server_to_client : compression_algorithms_server_to_client,
+			languages_client_to_server : languages_client_to_server,
+			languages_server_to_client : languages_server_to_client
+		},
 		first_kex_packet_follows : first_kex_packet_follows
 	};
 	Ok(kex_message)
