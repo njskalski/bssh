@@ -18,10 +18,8 @@ pub trait AvailableAlgorithms {
     fn get_available_compression_algorithms_server_to_client(&self) -> Vec<String>;
     fn get_available_languages_client_to_server(&self) -> Vec<String>;
     fn get_available_languages_server_to_client(&self) -> Vec<String>;
-}
-
-impl AvailableAlgorithms {
-	fn is_complete(&self) -> bool {
+    
+    fn is_complete(&self) -> bool {
 		self.get_available_kex_algorithms().len() > 0 &&
 		self.get_available_server_host_key_algorithms().len() > 0 &&
 		self.get_available_encryption_algorithms_client_to_server().len() > 0 &&
@@ -35,11 +33,11 @@ impl AvailableAlgorithms {
 	}
 }
 
-impl fmt::Display for AvailableAlgorithms {
+impl fmt::Display for AvailableAlgorithmSet {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
         write!(f,
-               "[AvailableAlgorithms]\nkex_algorithms: {:?} \nserver_host_key_algorithms: {:?} \nencryption_algorithms_client_to_server: {:?} \nencryption_algorithms_server_to_client: {:?} \nmac_algorithms_client_to_server: {:?} \nmac_algorithms_server_to_client: {:?} \ncompression_algorithms_client_to_server: {:?} \ncompression_algorithms_server_to_client: {:?} \nlanguages_client_to_server: {:?} \nlanguages_server_to_client: {:?} \n",
+               "[AvailableAlgorithmSet]\nkex_algorithms: {:?} \nserver_host_key_algorithms: {:?} \nencryption_algorithms_client_to_server: {:?} \nencryption_algorithms_server_to_client: {:?} \nmac_algorithms_client_to_server: {:?} \nmac_algorithms_server_to_client: {:?} \ncompression_algorithms_client_to_server: {:?} \ncompression_algorithms_server_to_client: {:?} \nlanguages_client_to_server: {:?} \nlanguages_server_to_client: {:?} \n",
                self.get_available_kex_algorithms(),
                self.get_available_server_host_key_algorithms(),
                self.get_available_encryption_algorithms_client_to_server(),

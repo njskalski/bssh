@@ -170,10 +170,13 @@ pub fn read_kex_init_message(stream : &mut Read) -> Result<KexMessage, Error> {
 #[cfg(test)]
 mod tests {
 
-    use super::read_welcome_string;
+    use super::*;
     use std::io::*;
     use errors;
     use mocks;
+    use dummy_config;
+    use config;
+    use config::AvailableAlgorithms;
 
     #[test]
     fn read_welcome_string_accepts_simple_string() {
@@ -239,9 +242,18 @@ mod tests {
         assert!(read_welcome_string(&mut msic, true).is_err());
     }
 
-//	#[test]
-//	fn reading_and_writing_kex_works() {
-//		let mut 
-//	}
+	//TODO this should be multiple tests, not one.
+	#[test]
+	fn reading_writing_intersecting_kex_works() {
+		let mut mws = mocks::MockWriteStream::new();
+		let dc = dummy_config::DummyCommonConfig{};
+		assert!(write_kex_init_message(&mut mws, &dc, false).is_ok());
+		
+		let mut mrs = mocks::MockReadStream::new(mws.output);
+		let kex_message = read_kex_init_message(&mut mrs).unwrap();
+		println!("{}", kex_message.available_algorithm_set);
+		
+		assert!(config::intersect_available_algorithms(&dc, &kex_message.available_algorithm_set).is_complete());
+	}
 
 }

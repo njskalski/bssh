@@ -1,6 +1,6 @@
 use config;
 
-struct DummyCommonConfig {}
+pub struct DummyCommonConfig {}
 
 impl config::AvailableAlgorithms for DummyCommonConfig {
     fn get_available_kex_algorithms(&self) -> Vec<String> {
