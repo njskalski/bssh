@@ -173,56 +173,28 @@ mod tests {
     use super::read_welcome_string;
     use std::io::*;
     use errors;
-
-    struct MockStream {
-        input: Vec<u8>,
-        pos: usize,
-    }
-
-    impl Read for MockStream {
-        fn read_exact(&mut self, mut buf: &mut [u8]) -> Result<()> {
-            if buf.len() > (self.input.len() - self.pos) {
-                Err(Error::new(ErrorKind::BrokenPipe, "")) //TODO ok errorkind?
-            } else {
-                for i in 0..buf.len() {
-                    buf[i] = self.input[self.pos + i];
-                }
-                self.pos += buf.len();
-                Ok(())
-            }
-        }
-
-        fn read(&mut self, _: &mut [u8]) -> Result<usize> {
-            panic!();
-        }
-    }
+    use mocks;
 
     #[test]
     fn read_welcome_string_accepts_simple_string() {
         let input = b"SSH-2.0-hello-world\r\n".to_vec();
-        let mut ms = MockStream {
-            input: input,
-            pos: 0,
-        };
+        let mut mrs = mocks::MockReadStream::new(input);
 
-        assert_eq!(read_welcome_string(&mut ms, false).unwrap(),
+        assert_eq!(read_welcome_string(&mut mrs, false).unwrap(),
                    vec!["SSH-2.0-hello-world".to_string()]);
-        ms.pos = 0;
-        assert_eq!(read_welcome_string(&mut ms, true).unwrap(),
+        mrs.pos = 0;
+        assert_eq!(read_welcome_string(&mut mrs, true).unwrap(),
                    vec!["SSH-2.0-hello-world".to_string()]);
     }
 
     #[test]
     fn read_welcome_string_accepts_commentary_when_asked() {
         let input = b"Hello\r\nWorld\r\nSSH-2.0-hello-world\r\n".to_vec();
-        let mut ms = MockStream {
-            input: input,
-            pos: 0,
-        };
+        let mut mrs = mocks::MockReadStream::new(input);
 
-        assert!(read_welcome_string(&mut ms, false).is_err());
-        ms.pos = 0;
-        assert_eq!(read_welcome_string(&mut ms, true).unwrap(),
+        assert!(read_welcome_string(&mut mrs, false).is_err());
+        mrs.pos = 0;
+        assert_eq!(read_welcome_string(&mut mrs, true).unwrap(),
                    vec!["Hello".to_string(),
                         "World".to_string(),
                         "SSH-2.0-hello-world".to_string()]);

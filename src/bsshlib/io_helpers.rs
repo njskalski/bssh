@@ -99,77 +99,20 @@ pub fn read_boolean(stream : &mut Read) -> Result<bool, Error> {
 mod tests {
 
     use super::*;
-    use std::io::*;
-
-    struct MockReadStream {
-        input: Vec<u8>,
-        pos: usize,
-    }
-
-    impl MockReadStream {
-        fn new(input: Vec<u8>) -> MockReadStream {
-            MockReadStream {
-                input: input,
-                pos: 0,
-            }
-        }
-    }
-
-    impl Read for MockReadStream {
-        fn read_exact(&mut self, mut buf: &mut [u8]) -> Result<()> {
-            if buf.len() > (self.input.len() - self.pos) {
-                Err(Error::new(ErrorKind::BrokenPipe, "")) //TODO ok errorkind?
-            } else {
-                for i in 0..buf.len() {
-                    buf[i] = self.input[self.pos + i];
-                }
-                self.pos += buf.len();
-                Ok(())
-            }
-        }
-
-        fn read(&mut self, _: &mut [u8]) -> Result<usize> {
-            panic!();
-        }
-    }
-
-    struct MockWriteStream {
-        output: Vec<u8>,
-    }
-
-    impl MockWriteStream {
-        fn new() -> MockWriteStream {
-            MockWriteStream { output: Vec::new() }
-        }
-    }
-
-    impl Write for MockWriteStream {
-        fn write(&mut self, buf: &[u8]) -> Result<usize> {
-            self.output.extend_from_slice(buf);
-            Ok(buf.len())
-        }
-
-        fn write_all(&mut self, buf: &[u8]) -> Result<()> {
-            self.output.extend_from_slice(buf);
-            Ok(())
-        }
-
-        fn flush(&mut self) -> Result<()> {
-            Ok(())
-        }
-    }
+    use std::io::*;	
+    use mocks;
 
     #[test]
     fn read_string_reads_string() {
         let hello_string: Vec<u8> = vec![0, 0, 0, 5, b'h', b'e', b'l', b'l', b'o'];
-        let mut mrs = MockReadStream::new(hello_string);
+        let mut mrs = mocks::MockReadStream::new(hello_string);
         assert_eq!(read_string(&mut mrs, None).unwrap(), b"hello".to_vec());
 
     }
 
     #[test]
     fn write_string_writes_string() {
-        let mut mws = MockWriteStream::new();
+        let mut mws = mocks::MockWriteStream::new();
         let hello_string: Vec<u8> = vec![0, 0, 0, 5, b'h', b'e', b'l', b'l', b'o'];
         write_string(&mut mws, &b"hello".to_vec()).unwrap();
         assert_eq!(mws.output, hello_string);
@@ -178,7 +121,7 @@ mod tests {
     #[test]
     fn read_string_does_not_overflow() {
         let hello_string: Vec<u8> = vec![255, 255, 255, 255, b'h', b'e', b'l', b'l', b'o'];
-        let mut mrs = MockReadStream::new(hello_string);
+        let mut mrs = mocks::MockReadStream::new(hello_string);
         assert!(read_string(&mut mrs, None).is_err());
 
     }
@@ -187,7 +130,7 @@ mod tests {
     fn read_name_lists_works() {
         let hello_string: Vec<u8> =
             [[0 as u8, 0, 0, 17].to_vec(), b"(\"hello\",\"world\")".to_vec()].concat();
-        let mut mrs = MockReadStream::new(hello_string);
+        let mut mrs = mocks::MockReadStream::new(hello_string);
         assert_eq!(read_name_list(&mut mrs, None).unwrap(),
                    vec!["hello", "world"]);
     }
@@ -196,7 +139,7 @@ mod tests {
     fn write_name_list_works() {
         let hello_string: Vec<u8> =
             [[0 as u8, 0, 0, 17].to_vec(), b"(\"hello\",\"world\")".to_vec()].concat();
-        let mut mws = MockWriteStream::new();
+        let mut mws = mocks::MockWriteStream::new();
         write_name_list(&mut mws, &vec!["hello".to_string(), "world".to_string()]).unwrap();
         assert_eq!(mws.output, hello_string);
     }
@@ -205,7 +148,7 @@ mod tests {
     fn read_boolean_works() {
     	//RFC 4251 page 9, "all non-zero calues MUST be intrpreted as TRUE"
     	let bools_string: Vec<u8> = [0 as u8, 1, 17].to_vec();
-        let mut mrs = MockReadStream::new(bools_string);
+        let mut mrs = mocks::MockReadStream::new(bools_string);
         assert_eq!(read_boolean(&mut mrs).unwrap(), false);
         assert_eq!(read_boolean(&mut mrs).unwrap(), true);
         assert_eq!(read_boolean(&mut mrs).unwrap(), true);
@@ -213,7 +156,7 @@ mod tests {
     
     #[test]
     fn write_boolean_works() {
-        let mut mws = MockWriteStream::new();
+        let mut mws = mocks::MockWriteStream::new();
         write_boolean(&mut mws, false).unwrap();
         write_boolean(&mut mws, true).unwrap();
         assert_eq!(mws.output, vec![0 as u8, 1]);

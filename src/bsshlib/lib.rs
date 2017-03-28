@@ -10,3 +10,5 @@ pub mod config;
 pub mod dummy_config; //TODO remove this after implementing proper config parsing
 
 pub mod io_helpers;
+
+mod mocks;
