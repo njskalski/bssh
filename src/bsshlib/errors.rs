@@ -8,3 +8,6 @@ pub const BSSH_ERR_CONNECTION_ENDED_UNEXPECTEDLY    : &'static str = "Connection
 
 pub const BSSH_ERR_BUFFER_CAPACITY_EXCEEDED         : &'static str = "Buffer capacity exceeded.";
 pub const BSSH_ERR_MALFORMED_NAME_LIST              : &'static str = "Malformed name list.";
+
+pub const BSSH_ERR_EXPECTED_KEX_MSG_INIT			: &'static str = "Error while processing key exchange packet: expected KEX_MSG_INIT in header";
+pub const BSSH_ERR_EXPECTED_ZERO_U32				: &'static str = "Error while processing key exchange packet: expected 0 (u32) at the end of message";

@@ -96,9 +96,59 @@ pub fn write_kex_init_message(stream: &mut Write,
 	let languages_server_to_client = config.get_available_languages_server_to_client();
 	io_helpers::write_name_list(stream, &languages_server_to_client)?;
 	
+	io_helpers::write_boolean(stream, first_kex_packet_follows)?;
 	
+	let empty_u32 : [u8; 4] = [0; 4];
+	stream.write(&empty_u32)?;
 	
     Ok(())
+}
+
+//retunrs pair AvailableAlgorithms, first_kex_packet_follows
+pub fn read_kex_init_message(stream : &mut Read) -> Result<config::KexMessage, Error> {
+	let mut init_byte : [u8; 1] = [0; 1];
+	stream.read_exact(&mut init_byte)?;
+	
+	if init_byte[0] != numbers::SSH_MSG_KEXINIT {
+		return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_ERR_EXPECTED_KEX_MSG_INIT));
+	}
+	
+	let mut cookie : [u8; 16] = [0; 16];
+	stream.read_exact(&mut cookie)?;
+	
+	let kex_algorithms = io_helpers::read_name_list(stream, None)?;
+	let server_host_key_algorithms = io_helpers::read_name_list(stream, None)?;
+	let encryption_algorithms_client_to_server = io_helpers::read_name_list(stream, None)?;
+	let encryption_algorithms_server_to_client = io_helpers::read_name_list(stream, None)?;
+	let mac_algorithms_client_to_server = io_helpers::read_name_list(stream, None)?;
+	let mac_algorithms_server_to_client = io_helpers::read_name_list(stream, None)?;
+	let compression_algorithms_client_to_server = io_helpers::read_name_list(stream, None)?;
+	let compression_algorithms_server_to_client = io_helpers::read_name_list(stream, None)?;
+	let languages_client_to_server = io_helpers::read_name_list(stream, None)?;
+	let languages_server_to_client = io_helpers::read_name_list(stream, None)?;
+	let first_kex_packet_follows : bool = io_helpers::read_boolean(stream)?;
+	
+	let mut empty_u32 : [u8; 4] = [0; 4];
+	stream.read_exact(&mut empty_u32)?;
+	if empty_u32[0] != 0 || empty_u32[1] != 0 || empty_u32[2] != 0 || empty_u32[3] != 0 {
+		return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_ERR_EXPECTED_ZERO_U32));
+	}
+	
+	let kex_message = config::KexMessage {
+		cookie : cookie,
+		kex_algorithms : kex_algorithms,
+		server_host_key_algorithms : server_host_key_algorithms,
+		encryption_algorithms_client_to_server : encryption_algorithms_client_to_server,
+		encryption_algorithms_server_to_client : encryption_algorithms_server_to_client,
+		mac_algorithms_client_to_server : mac_algorithms_client_to_server,
+		mac_algorithms_server_to_client : mac_algorithms_server_to_client,
+		compression_algorithms_client_to_server : compression_algorithms_client_to_server,
+		compression_algorithms_server_to_client : compression_algorithms_server_to_client,
+		languages_client_to_server : languages_client_to_server,
+		languages_server_to_client : languages_server_to_client,
+		first_kex_packet_follows : first_kex_packet_follows
+	};
+	Ok(kex_message)
 }
 
 #[cfg(test)]
