@@ -33,7 +33,7 @@ pub trait AvailableAlgorithms {
 	}
 }
 
-impl fmt::Display for AvailableAlgorithmSet {
+impl fmt::Display for AvailableAlgorithms {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
         write!(f,

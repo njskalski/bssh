@@ -251,7 +251,7 @@ mod tests {
 		
 		let mut mrs = mocks::MockReadStream::new(mws.output);
 		let kex_message = read_kex_init_message(&mut mrs).unwrap();
-		println!("{}", kex_message.available_algorithm_set);
+		println!("{}", &kex_message.available_algorithm_set as &AvailableAlgorithms);
 		
 		assert!(config::intersect_available_algorithms(&dc, &kex_message.available_algorithm_set).is_complete());
 	}
