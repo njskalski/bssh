@@ -6,7 +6,22 @@ use numbers;
 use io_helpers;
 
 const MAX_BUFFER_LENGTH: usize = 255; //RFC 4253 page 5
-const MAX_COMMENT_LINES: usize = 10; //TODO arbitrary value
+const MAX_COMMENT_LINES: usize = 100; //TODO arbitrary value
+
+pub struct KexMessage {
+    pub cookie: [u8; 16],
+    pub available_algorithm_set: config::AvailableAlgorithmSet,
+    pub first_kex_packet_follows: bool,
+}
+
+impl KexMessage {
+    fn get_cookie(&self) -> [u8; 16] {
+        self.cookie
+    }
+    fn get_first_kex_packet_follows(&self) -> bool {
+        self.first_kex_packet_follows
+    }
+}
 
 pub fn read_welcome_string(stream: &mut Read, allow_comments: bool) -> Result<Vec<String>, Error> {
     let mut buf: Vec<u8> = Vec::new();
@@ -103,9 +118,8 @@ pub fn write_kex_init_message(stream: &mut Write,
 	
     Ok(())
 }
-
-//retunrs pair AvailableAlgorithms, first_kex_packet_follows
-pub fn read_kex_init_message(stream : &mut Read) -> Result<config::KexMessage, Error> {
+                              
+pub fn read_kex_init_message(stream : &mut Read) -> Result<KexMessage, Error> {
 	let mut init_byte : [u8; 1] = [0; 1];
 	stream.read_exact(&mut init_byte)?;
 	
@@ -134,7 +148,7 @@ pub fn read_kex_init_message(stream : &mut Read) -> Result<config::KexMessage, E
 		return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_ERR_EXPECTED_ZERO_U32));
 	}
 	
-	let kex_message = config::KexMessage {
+	let kex_message = KexMessage {
 		cookie : cookie,
 		available_algorithm_set : config::AvailableAlgorithmSet {
 			kex_algorithms : kex_algorithms,
@@ -267,5 +281,10 @@ mod tests {
         msic.pos = 0;
         assert!(read_welcome_string(&mut msic, true).is_err());
     }
+
+//	#[test]
+//	fn reading_and_writing_kex_works() {
+//		let mut 
+//	}
 
 }
