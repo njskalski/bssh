@@ -90,7 +90,7 @@ pub fn write_kex_init_message(stream: &mut Write,
 
     let encryption_algorithms_client_to_server = config.get_available_encryption_algorithms_client_to_server();
     io_helpers::write_name_list(stream, &encryption_algorithms_client_to_server)?;
-    let encryption_algorithms_server_to_client = config.get_available_compression_algorithms_server_to_client();
+    let encryption_algorithms_server_to_client = config.get_available_encryption_algorithms_server_to_client();
     io_helpers::write_name_list(stream, &encryption_algorithms_server_to_client)?;
 
     let mac_algorithms_client_to_server = config.get_available_mac_algorithms_client_to_server();
@@ -251,9 +251,14 @@ mod tests {
 		
 		let mut mrs = mocks::MockReadStream::new(mws.output);
 		let kex_message = read_kex_init_message(&mut mrs).unwrap();
-		println!("{}", &kex_message.available_algorithm_set as &AvailableAlgorithms);
+//		println!("{}", &dc as &AvailableAlgorithms);
+//		println!("{}", &kex_message.available_algorithm_set as &AvailableAlgorithms);
 		
-		assert!(config::intersect_available_algorithms(&dc, &kex_message.available_algorithm_set).is_complete());
+		let intersection = config::intersect_available_algorithms(&dc, &kex_message.available_algorithm_set);
+		
+//		println!("{}", &intersection as &AvailableAlgorithms);
+		
+		assert!(intersection.is_complete());
 	}
 
 }

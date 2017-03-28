@@ -37,7 +37,7 @@ impl fmt::Display for AvailableAlgorithms {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
         write!(f,
-               "[AvailableAlgorithmSet]\nkex_algorithms: {:?} \nserver_host_key_algorithms: {:?} \nencryption_algorithms_client_to_server: {:?} \nencryption_algorithms_server_to_client: {:?} \nmac_algorithms_client_to_server: {:?} \nmac_algorithms_server_to_client: {:?} \ncompression_algorithms_client_to_server: {:?} \ncompression_algorithms_server_to_client: {:?} \nlanguages_client_to_server: {:?} \nlanguages_server_to_client: {:?} \n",
+               "[AvailableAlgorithm]\nkex_algorithms: {:?} \nserver_host_key_algorithms: {:?} \nencryption_algorithms_client_to_server: {:?} \nencryption_algorithms_server_to_client: {:?} \nmac_algorithms_client_to_server: {:?} \nmac_algorithms_server_to_client: {:?} \ncompression_algorithms_client_to_server: {:?} \ncompression_algorithms_server_to_client: {:?} \nlanguages_client_to_server: {:?} \nlanguages_server_to_client: {:?} \n",
                self.get_available_kex_algorithms(),
                self.get_available_server_host_key_algorithms(),
                self.get_available_encryption_algorithms_client_to_server(),
