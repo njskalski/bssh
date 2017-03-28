@@ -200,33 +200,18 @@ mod tests {
                         "SSH-2.0-hello-world".to_string()]);
     }
 
-    struct MockStreamInfitnite {}
-
-    impl Read for MockStreamInfitnite {
-        fn read_exact(&mut self, mut buf: &mut [u8]) -> Result<()> {
-            for i in 0..buf.len() {
-                buf[i] = b'.';
-            }
-            Ok(())
-        }
-
-        fn read(&mut self, _: &mut [u8]) -> Result<usize> {
-            panic!();
-        }
-    }
-
     #[test]
     fn read_welcome_string_handles_overflow() {
-        let mut msi = MockStreamInfitnite {};
+        let mut msi = mocks::MockReadStreamInfitnite {};
         assert!(read_welcome_string(&mut msi, false).is_err());
         assert!(read_welcome_string(&mut msi, true).is_err());
     }
 
-    struct MockStreamInfitniteComment {
+    struct MockReadStreamInfitniteComment {
         pos: u8,
     }
 
-    impl Read for MockStreamInfitniteComment {
+    impl Read for MockReadStreamInfitniteComment {
         fn read_exact(&mut self, mut buf: &mut [u8]) -> Result<()> {
             for i in 0..buf.len() {
                 buf[i] = match self.pos {
@@ -248,7 +233,7 @@ mod tests {
 
     #[test]
     fn read_welcome_string_handles_comment_overflow() {
-        let mut msic = MockStreamInfitniteComment { pos: 0 };
+        let mut msic = MockReadStreamInfitniteComment { pos: 0 };
         assert!(read_welcome_string(&mut msic, false).is_err());
         msic.pos = 0;
         assert!(read_welcome_string(&mut msic, true).is_err());
