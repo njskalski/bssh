@@ -7,6 +7,9 @@ extern crate bsshlib;
 
 use bsshlib::version;
 use bsshlib::msgs;
+use bsshlib::dummy_config;
+use bsshlib::config;
+
 
 const HOST: &'static str = "127.0.0.1:5555";
 
@@ -17,11 +20,19 @@ fn connect() -> Result<(), Box<error::Error + Send + Sync>> {
     let mut stream = try!(TcpStream::connect(HOST));
     try!(stream.write_all(&hello));
 
-    msgs::read_welcome_string(&mut stream, true);
+    let welcome : Vec<String> = msgs::read_welcome_string(&mut stream, true)?;
+    
+    for i in welcome.iter() { println!("{}",i); };
+    
+	let config = dummy_config::DummyCommonConfig{};
+	
+	msgs::write_kex_init_message(&mut stream, &config, false)?;
+	
+	let kex_message = msgs::read_kex_init_message(&mut stream)?;
+	
+	println!("{}", &kex_message.available_algorithm_set as &config::AvailableAlgorithms);
 
-    stream
-        .shutdown(Shutdown::Both)
-        .expect("shutdown call failed");
+    stream.shutdown(Shutdown::Both)?;
 
     Ok(())
 }
