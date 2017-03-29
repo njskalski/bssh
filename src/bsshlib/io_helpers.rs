@@ -45,9 +45,7 @@ pub fn write_name_list(stream: &mut Write, names: &Vec<String>) -> Result<(), Er
     let mut payload: Vec<u8> = Vec::new();
 
     for i in 0..names.len() {
-        payload.push(b'"');
         payload.extend_from_slice(names[i].as_bytes());
-        payload.push(b'"');
         if i < names.len() - 1 {
             payload.push(b',');
         }
@@ -60,13 +58,16 @@ pub fn read_name_list(stream: &mut Read, max_length: Option<u32>) -> Result<Vec<
     let payload: Vec<u8> = read_string(stream, max_length)?;
     let mut res: Vec<String> = Vec::new();
 
+    if payload.len() == 0 {
+        return Ok(res);
+    }
+
     for substr in payload.split(|c| *c == b',') {
         //we expect the substrings to be non-empty
-        if substr.len() < 3 || substr[0] != b'\"' || substr[substr.len() - 1] != b'\"' {
+        if substr.len() == 0 {
             return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_ERR_MALFORMED_NAME_LIST));
         }
-        let substr_body = substr[1..(substr.len() - 1)].to_vec();
-        match from_utf8(&substr_body) {
+        match from_utf8(&substr) {
             Ok(s) => res.push(s.to_string()),
             _ => {
                 return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_ERR_MALFORMED_NAME_LIST))
@@ -77,23 +78,23 @@ pub fn read_name_list(stream: &mut Read, max_length: Option<u32>) -> Result<Vec<
     Ok(res)
 }
 
-pub fn write_boolean(stream : &mut Write, value : bool) -> Result<(), Error> {
-	let payload : [u8; 1] = [if value { 1 as u8 } else { 0 as u8 }; 1];
-	stream.write_all(&payload)?;
-	Ok(())
+pub fn write_boolean(stream: &mut Write, value: bool) -> Result<(), Error> {
+    let payload: [u8; 1] = [if value { 1 as u8 } else { 0 as u8 }; 1];
+    stream.write_all(&payload)?;
+    Ok(())
 }
 
-pub fn read_boolean(stream : &mut Read) -> Result<bool, Error> {
-	let mut payload : [u8; 1] = [0; 1];
-	stream.read_exact(&mut payload)?;
-	if payload[0] == 0 { Ok(false) } else { Ok(true) }
+pub fn read_boolean(stream: &mut Read) -> Result<bool, Error> {
+    let mut payload: [u8; 1] = [0; 1];
+    stream.read_exact(&mut payload)?;
+    if payload[0] == 0 { Ok(false) } else { Ok(true) }
 }
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use std::io::*;	
+    use std::io::*;
     use mocks::*;
 
     #[test]
@@ -122,32 +123,39 @@ mod tests {
 
     #[test]
     fn read_name_lists_works() {
-        let hello_string: Vec<u8> =
-            [[0 as u8, 0, 0, 15].to_vec(), b"\"hello\",\"world\"".to_vec()].concat();
+        let hello_string: Vec<u8> = [[0 as u8, 0, 0, 11].to_vec(), b"hello,world".to_vec()]
+            .concat();
         let mut mrs = MockReadStream::new(hello_string);
         assert_eq!(read_name_list(&mut mrs, None).unwrap(),
                    vec!["hello", "world"]);
     }
 
     #[test]
+    fn read_name_lists_tolerates_empty_list() {
+        let empty_list_string: Vec<u8> = [0 as u8, 0, 0, 0].to_vec();
+        let mut mrs = MockReadStream::new(empty_list_string);
+        assert_eq!(read_name_list(&mut mrs, None).unwrap().len(), 0);
+    }
+
+    #[test]
     fn write_name_list_works() {
-        let hello_string: Vec<u8> =
-            [[0 as u8, 0, 0, 15].to_vec(), b"\"hello\",\"world\"".to_vec()].concat();
+        let hello_string: Vec<u8> = [[0 as u8, 0, 0, 11].to_vec(), b"hello,world".to_vec()]
+            .concat();
         let mut mws = MockWriteStream::new();
         write_name_list(&mut mws, &vec!["hello".to_string(), "world".to_string()]).unwrap();
         assert_eq!(mws.output, hello_string);
     }
-    
+
     #[test]
     fn read_boolean_works() {
-    	//RFC 4251 page 9, "all non-zero calues MUST be intrpreted as TRUE"
-    	let bools_string: Vec<u8> = [0 as u8, 1, 17].to_vec();
+        //RFC 4251 page 9, "all non-zero calues MUST be intrpreted as TRUE"
+        let bools_string: Vec<u8> = [0 as u8, 1, 17].to_vec();
         let mut mrs = MockReadStream::new(bools_string);
         assert_eq!(read_boolean(&mut mrs).unwrap(), false);
         assert_eq!(read_boolean(&mut mrs).unwrap(), true);
         assert_eq!(read_boolean(&mut mrs).unwrap(), true);
     }
-    
+
     #[test]
     fn write_boolean_works() {
         let mut mws = MockWriteStream::new();
