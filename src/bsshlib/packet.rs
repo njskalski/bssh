@@ -29,10 +29,10 @@ pub fn get_packet_from_payload(payload: &mut Vec<u8>, cipher_block_size : Option
 
 	//packet_length - not including 'mac' or the 'packet_length' itself.
 	let packet_length : usize = 1 + payload.len() + random_padding.len();
-	println!("writing packet_length {}", packet_length);
+	//println!("writing packet_length {}", packet_length);
     result.write_u32::<BigEndian>(packet_length as u32)?;
     result.push(padding_length);
-    println!("writing padding_length {}", padding_length);
+    //println!("writing padding_length {}", padding_length);
     result.append(payload);
     result.append(&mut random_padding);
 
@@ -53,7 +53,7 @@ pub fn read_packet_from_stream(stream : &mut Read, cipher_block_size : Option<u8
 	
 	//TODO here some decoding takes place?
 	let packet_length : u32 = Cursor::new(length_buffer[0..4].to_vec()).read_u32::<BigEndian>()?; //TODO this is horrible
-	println!("reading packet_length = {}", packet_length);
+	//println!("reading packet_length = {}", packet_length);
 	
 	if packet_length as usize > MAX_PACKET_LENGTH {
 		return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_ERR_BUFFER_CAPACITY_EXCEEDED)); //TODO better message?
@@ -65,12 +65,12 @@ pub fn read_packet_from_stream(stream : &mut Read, cipher_block_size : Option<u8
 	let mut padding_length_buf : [u8; 1] = [0; 1];
 	stream.read(&mut padding_length_buf)?;
 	let padding_length : u8 = padding_length_buf[0];
-	println!("reading padding_length = {}", padding_length);
+	//println!("reading padding_length = {}", padding_length);
 	
 	let mut buffer : Vec<u8> = Vec::new();
 	buffer.resize((packet_length - 1) as usize, 0); // -1 stands for padding_length which is read before
 	stream.read_exact(&mut buffer)?;
-	println!("read!");
-	println!("{:?}", &buffer);
+	//println!("read!");
+	//println!("{:?}", &buffer);
 	Ok(buffer[0..(buffer.len() - (padding_length as usize))].to_vec()) //TODO this is also horrible
 }

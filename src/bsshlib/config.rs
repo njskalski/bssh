@@ -27,9 +27,8 @@ pub trait AvailableAlgorithms {
 		self.get_available_mac_algorithms_client_to_server().len() > 0 &&
 		self.get_available_mac_algorithms_server_to_client().len() > 0 &&
 		self.get_available_compression_algorithms_client_to_server().len() > 0 &&
-		self.get_available_compression_algorithms_server_to_client().len() > 0 &&
-		self.get_available_languages_client_to_server().len() > 0 &&
-		self.get_available_languages_server_to_client().len() > 0
+		self.get_available_compression_algorithms_server_to_client().len() > 0
+		//RFC 4254 page 19: "Both parties MAY ignore this name-list. If there are no language preferences, this name-list SHOULD be empty"		
 	}
 
     fn copy_as_set(&self) -> AvailableAlgorithmSet {
