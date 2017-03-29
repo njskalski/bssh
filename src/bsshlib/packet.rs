@@ -9,14 +9,17 @@ const MAX_PACKET_LENGTH : usize = 4*1024*1024; //TODO arbitrary value, probably 
 pub fn get_packet_from_payload(payload: &mut Vec<u8>, cipher_block_size : Option<u8>) -> Result<Vec<u8>, Error> {
     let mut result: Vec<u8> = Vec::new();
 
-    let all_without_random = 5 + payload.len();
+    let packet_length_without_random = 1 + payload.len();
     //TODO this is ad-hoc formula
     let alignment : u8 = match cipher_block_size {
     	Some(size) => size,
     	None => 8 //rfc4253 on random padding
     };
     
-    let padding_length: u8 = alignment - ((all_without_random % alignment as usize) as u8);
+    let min_padding_length: u8 = alignment - ((packet_length_without_random % alignment as usize) as u8);
+
+	//RFC 4253 page 8 "there MUST be at least four bytes of padding"
+	let padding_length = if min_padding_length >= 4 { min_padding_length } else {min_padding_length + alignment};
 
     let mut random_padding: Vec<u8> = Vec::new();
     random_padding.reserve(padding_length as usize);
@@ -41,7 +44,7 @@ pub fn get_packet_from_payload(payload: &mut Vec<u8>, cipher_block_size : Option
 pub fn read_packet_from_stream(stream : &mut Read, cipher_block_size : Option<u8>) -> Result<Vec<u8>, Error> {
 	let read_to_determine_packet_length : u8 = match cipher_block_size {
     	Some(size) => size,
-    	None => 4 //TODO arbitrary value. Maybe random?
+    	None => 4
     };
 	
 	let mut length_buffer : Vec<u8> = Vec::new();
@@ -67,6 +70,7 @@ pub fn read_packet_from_stream(stream : &mut Read, cipher_block_size : Option<u8
 	let mut buffer : Vec<u8> = Vec::new();
 	buffer.resize((packet_length - 1) as usize, 0); // -1 stands for padding_length which is read before
 	stream.read_exact(&mut buffer)?;
-	
-	Ok(buffer[0..(packet_length as usize - 1 - (padding_length as usize))].to_vec()) //TODO this is also horrible
+	println!("read!");
+	println!("{:?}", &buffer);
+	Ok(buffer[0..(buffer.len() - (padding_length as usize))].to_vec()) //TODO this is also horrible
 }

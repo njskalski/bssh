@@ -72,7 +72,12 @@ fn main() {
         match stream {
             Err(e) => println!("failed: {}", e),
             Ok(stream) => {
-                thread::spawn(move || handle_client(stream));
+                thread::spawn(move || {
+                		match handle_client(stream) {
+                			Err(e) => println!("failed2: {}", e),
+                			_ => {}
+                		}
+                });
             }
         }
     }

@@ -181,10 +181,10 @@ mod tests {
     use super::*;
     use std::io::*;
     use errors;
-    use tests::*;
     use dummy_config;
     use config;
     use config::AvailableAlgorithms;
+    use mocks::*;
 
     #[test]
     fn read_welcome_string_accepts_simple_string() {

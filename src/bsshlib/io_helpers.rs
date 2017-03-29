@@ -43,7 +43,6 @@ pub fn read_string(stream: &mut Read, max_length: Option<u32>) -> Result<Vec<u8>
 
 pub fn write_name_list(stream: &mut Write, names: &Vec<String>) -> Result<(), Error> {
     let mut payload: Vec<u8> = Vec::new();
-    payload.push(b'(');
 
     for i in 0..names.len() {
         payload.push(b'"');
@@ -54,7 +53,6 @@ pub fn write_name_list(stream: &mut Write, names: &Vec<String>) -> Result<(), Er
         }
     }
 
-    payload.push(b')');
     write_string(stream, &payload)
 }
 
@@ -62,11 +60,7 @@ pub fn read_name_list(stream: &mut Read, max_length: Option<u32>) -> Result<Vec<
     let payload: Vec<u8> = read_string(stream, max_length)?;
     let mut res: Vec<String> = Vec::new();
 
-    if payload.len() < 2 || payload[0] != b'(' || payload[payload.len() - 1] != b')' {
-        return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_ERR_MALFORMED_NAME_LIST));
-    }
-
-    for substr in payload[1..payload.len() - 1].split(|c| *c == b',') {
+    for substr in payload.split(|c| *c == b',') {
         //we expect the substrings to be non-empty
         if substr.len() < 3 || substr[0] != b'\"' || substr[substr.len() - 1] != b'\"' {
             return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_ERR_MALFORMED_NAME_LIST));
@@ -100,7 +94,7 @@ mod tests {
 
     use super::*;
     use std::io::*;	
-    use tests::*;
+    use mocks::*;
 
     #[test]
     fn read_string_reads_string() {
@@ -129,7 +123,7 @@ mod tests {
     #[test]
     fn read_name_lists_works() {
         let hello_string: Vec<u8> =
-            [[0 as u8, 0, 0, 17].to_vec(), b"(\"hello\",\"world\")".to_vec()].concat();
+            [[0 as u8, 0, 0, 15].to_vec(), b"\"hello\",\"world\"".to_vec()].concat();
         let mut mrs = MockReadStream::new(hello_string);
         assert_eq!(read_name_list(&mut mrs, None).unwrap(),
                    vec!["hello", "world"]);
@@ -138,7 +132,7 @@ mod tests {
     #[test]
     fn write_name_list_works() {
         let hello_string: Vec<u8> =
-            [[0 as u8, 0, 0, 17].to_vec(), b"(\"hello\",\"world\")".to_vec()].concat();
+            [[0 as u8, 0, 0, 15].to_vec(), b"\"hello\",\"world\"".to_vec()].concat();
         let mut mws = MockWriteStream::new();
         write_name_list(&mut mws, &vec!["hello".to_string(), "world".to_string()]).unwrap();
         assert_eq!(mws.output, hello_string);
