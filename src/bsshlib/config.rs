@@ -18,7 +18,7 @@ pub trait AvailableAlgorithms {
     fn get_available_compression_algorithms_server_to_client(&self) -> Vec<String>;
     fn get_available_languages_client_to_server(&self) -> Vec<String>;
     fn get_available_languages_server_to_client(&self) -> Vec<String>;
-    
+
     fn is_complete(&self) -> bool {
 		self.get_available_kex_algorithms().len() > 0 &&
 		self.get_available_server_host_key_algorithms().len() > 0 &&
@@ -31,6 +31,21 @@ pub trait AvailableAlgorithms {
 		self.get_available_languages_client_to_server().len() > 0 &&
 		self.get_available_languages_server_to_client().len() > 0
 	}
+
+    fn copy_as_set(&self) -> AvailableAlgorithmSet {
+    	AvailableAlgorithmSet {
+            kex_algorithms : self.get_available_kex_algorithms(),
+            server_host_key_algorithms : self.get_available_server_host_key_algorithms(),
+            encryption_algorithms_client_to_server : self.get_available_encryption_algorithms_client_to_server(),
+            encryption_algorithms_server_to_client : self.get_available_encryption_algorithms_server_to_client(),
+            mac_algorithms_client_to_server : self.get_available_mac_algorithms_client_to_server(),
+            mac_algorithms_server_to_client : self.get_available_mac_algorithms_server_to_client(),
+            compression_algorithms_client_to_server : self.get_available_compression_algorithms_client_to_server(),
+            compression_algorithms_server_to_client : self.get_available_compression_algorithms_server_to_client(),
+            languages_client_to_server : self.get_available_languages_client_to_server(),
+            languages_server_to_client : self.get_available_languages_server_to_client()
+    	}
+    }
 }
 
 impl fmt::Display for AvailableAlgorithms {

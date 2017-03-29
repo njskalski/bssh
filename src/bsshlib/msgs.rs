@@ -1,6 +1,7 @@
 use std::io::{Error, ErrorKind, Read, Write};
 use rand;
 use config;
+use config::AvailableAlgorithms;
 use errors;
 use numbers;
 use io_helpers;
@@ -73,45 +74,52 @@ pub fn read_welcome_string(stream: &mut Read, allow_comments: bool) -> Result<Ve
     Ok(res)
 }
 
+pub fn create_kex_init_message(config: &config::AvailableAlgorithms, first_kex_packet_follows: bool) -> KexMessage {
+	let cookie: [u8; 16] = rand::random::<[u8; 16]>();
+	KexMessage {
+		cookie : cookie,
+		available_algorithm_set : config.copy_as_set(),
+		first_kex_packet_follows : first_kex_packet_follows 
+	}
+}
+
 pub fn write_kex_init_message(stream: &mut Write,
-                              config: &config::AvailableAlgorithms,
-							  first_kex_packet_follows : bool)
+                              kex_message : &KexMessage)
                               -> Result<(), Error> {
     stream.write(&[numbers::SSH_MSG_KEXINIT])?;
 
-    let cookie: [u8; 16] = rand::random::<[u8; 16]>();
-    stream.write(&cookie)?;
+    stream.write(&kex_message.cookie)?;
 
-    let kex_algorithms = config.get_available_kex_algorithms();
+    let kex_algorithms = kex_message.available_algorithm_set.get_available_kex_algorithms();
     io_helpers::write_name_list(stream, &kex_algorithms)?;
 
-    let server_host_key_algorithms = config.get_available_server_host_key_algorithms();
+    let server_host_key_algorithms = kex_message.available_algorithm_set.get_available_server_host_key_algorithms();
     io_helpers::write_name_list(stream, &server_host_key_algorithms)?;
 
-    let encryption_algorithms_client_to_server = config.get_available_encryption_algorithms_client_to_server();
+    let encryption_algorithms_client_to_server = kex_message.available_algorithm_set.get_available_encryption_algorithms_client_to_server();
     io_helpers::write_name_list(stream, &encryption_algorithms_client_to_server)?;
-    let encryption_algorithms_server_to_client = config.get_available_encryption_algorithms_server_to_client();
+    let encryption_algorithms_server_to_client = kex_message.available_algorithm_set.get_available_encryption_algorithms_server_to_client();
     io_helpers::write_name_list(stream, &encryption_algorithms_server_to_client)?;
 
-    let mac_algorithms_client_to_server = config.get_available_mac_algorithms_client_to_server();
+    let mac_algorithms_client_to_server = kex_message.available_algorithm_set.get_available_mac_algorithms_client_to_server();
     io_helpers::write_name_list(stream, &mac_algorithms_client_to_server)?;
     
-    let mac_algorithms_server_to_client = config.get_available_mac_algorithms_server_to_client();
+    let mac_algorithms_server_to_client = kex_message.available_algorithm_set.get_available_mac_algorithms_server_to_client();
     io_helpers::write_name_list(stream, &mac_algorithms_server_to_client)?;
 
-	let compression_algorithms_client_to_server = config.get_available_compression_algorithms_client_to_server();
+	let compression_algorithms_client_to_server = kex_message.available_algorithm_set.get_available_compression_algorithms_client_to_server();
 	io_helpers::write_name_list(stream, &compression_algorithms_client_to_server)?;
 	
-	let compression_algorithms_server_to_client = config.get_available_compression_algorithms_server_to_client();
+	let compression_algorithms_server_to_client = kex_message.available_algorithm_set.get_available_compression_algorithms_server_to_client();
 	io_helpers::write_name_list(stream, &compression_algorithms_server_to_client)?;
 	
-	let languages_client_to_server = config.get_available_languages_client_to_server();
+	let languages_client_to_server = kex_message.available_algorithm_set.get_available_languages_client_to_server();
 	io_helpers::write_name_list(stream, &languages_client_to_server)?;
 	
-	let languages_server_to_client = config.get_available_languages_server_to_client();
+	let languages_server_to_client = kex_message.available_algorithm_set.get_available_languages_server_to_client();
 	io_helpers::write_name_list(stream, &languages_server_to_client)?;
 	
-	io_helpers::write_boolean(stream, first_kex_packet_follows)?;
+	io_helpers::write_boolean(stream, kex_message.first_kex_packet_follows)?;
 	
 	let empty_u32 : [u8; 4] = [0; 4];
 	stream.write(&empty_u32)?;
@@ -247,7 +255,8 @@ mod tests {
 	fn reading_writing_intersecting_kex_works() {
 		let mut mws = mocks::MockWriteStream::new();
 		let dc = dummy_config::DummyCommonConfig{};
-		assert!(write_kex_init_message(&mut mws, &dc, false).is_ok());
+		let kex = create_kex_init_message(&dc, false);
+		assert!(write_kex_init_message(&mut mws, &kex).is_ok());
 		
 		let mut mrs = mocks::MockReadStream::new(mws.output);
 		let kex_message = read_kex_init_message(&mut mrs).unwrap();

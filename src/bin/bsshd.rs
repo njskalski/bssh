@@ -23,8 +23,9 @@ fn handle_client(mut stream: TcpStream) -> Result<(), Box<error::Error + Send + 
     for i in welcome.iter() { println!("{}",i); };
     
 	let config = dummy_config::DummyCommonConfig{};
+	let kex = msgs::create_kex_init_message(&config, false);
 	
-	msgs::write_kex_init_message(&mut stream, &config, false)?;
+	msgs::write_kex_init_message(&mut stream, &kex)?;
 	
 	let kex_message = msgs::read_kex_init_message(&mut stream)?;
 	

@@ -21,15 +21,17 @@ fn connect() -> Result<(), Box<error::Error + Send + Sync>> {
     try!(stream.write_all(&hello));
 
     let welcome : Vec<String> = msgs::read_welcome_string(&mut stream, true)?;
-    
+
     for i in welcome.iter() { println!("{}",i); };
-    
+
+    let mut payload : Vec<u8> = Vec::new();
 	let config = dummy_config::DummyCommonConfig{};
+	let kex = msgs::create_kex_init_message(&config, false);
 	
-	msgs::write_kex_init_message(&mut stream, &config, false)?;
-	
+	msgs::write_kex_init_message(&mut stream, &kex)?;  
+
 	let kex_message = msgs::read_kex_init_message(&mut stream)?;
-	
+
 	println!("{}", &kex_message.available_algorithm_set as &config::AvailableAlgorithms);
 
     stream.shutdown(Shutdown::Both)?;
