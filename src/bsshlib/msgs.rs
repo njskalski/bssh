@@ -181,7 +181,7 @@ mod tests {
     use super::*;
     use std::io::*;
     use errors;
-    use mocks;
+    use tests::*;
     use dummy_config;
     use config;
     use config::AvailableAlgorithms;
@@ -189,7 +189,7 @@ mod tests {
     #[test]
     fn read_welcome_string_accepts_simple_string() {
         let input = b"SSH-2.0-hello-world\r\n".to_vec();
-        let mut mrs = mocks::MockReadStream::new(input);
+        let mut mrs = MockReadStream::new(input);
 
         assert_eq!(read_welcome_string(&mut mrs, false).unwrap(),
                    vec!["SSH-2.0-hello-world".to_string()]);
@@ -201,7 +201,7 @@ mod tests {
     #[test]
     fn read_welcome_string_accepts_commentary_when_asked() {
         let input = b"Hello\r\nWorld\r\nSSH-2.0-hello-world\r\n".to_vec();
-        let mut mrs = mocks::MockReadStream::new(input);
+        let mut mrs = MockReadStream::new(input);
 
         assert!(read_welcome_string(&mut mrs, false).is_err());
         mrs.pos = 0;
@@ -213,7 +213,7 @@ mod tests {
 
     #[test]
     fn read_welcome_string_handles_overflow() {
-        let mut msi = mocks::MockReadStreamInfitnite {};
+        let mut msi = MockReadStreamInfitnite {};
         assert!(read_welcome_string(&mut msi, false).is_err());
         assert!(read_welcome_string(&mut msi, true).is_err());
     }
@@ -253,12 +253,12 @@ mod tests {
 	//TODO this should be multiple tests, not one.
 	#[test]
 	fn reading_writing_intersecting_kex_works() {
-		let mut mws = mocks::MockWriteStream::new();
+		let mut mws = MockWriteStream::new();
 		let dc = dummy_config::DummyCommonConfig{};
 		let kex = create_kex_init_message(&dc, false);
 		assert!(write_kex_init_message(&mut mws, &kex).is_ok());
 		
-		let mut mrs = mocks::MockReadStream::new(mws.output);
+		let mut mrs = MockReadStream::new(mws.output);
 		let kex_message = read_kex_init_message(&mut mrs).unwrap();
 //		println!("{}", &dc as &AvailableAlgorithms);
 //		println!("{}", &kex_message.available_algorithm_set as &AvailableAlgorithms);
