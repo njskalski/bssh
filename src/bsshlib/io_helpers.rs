@@ -92,43 +92,78 @@ pub fn read_boolean(stream: &mut Read) -> Result<bool, Error> {
     if payload[0] == 0 { Ok(false) } else { Ok(true) }
 }
 
-pub fn write_mpint(stream: &mut Write, value : BigInt) -> Result<(), Error> {
-	if value == 0.to_bigint().unwrap() {
-		stream.write(&[0 as u8; 4])?;
-		Ok(())
-	} else {		
-		let (sign, mut tail) = value.to_bytes_be();
-		
-		/* RFC4251: If the most significant bit would be set for a positivce number, the number MUST be preceded by a zero byte. */
-		/* own comment: If the most significant bit in negative number is set, we need to preceed by a 80 (hex) byte*/
-		/* bottom line, no matter the sign, most significant byte set => one additional byte needed */
-		let most_significant_byte_positive : bool = tail[0] & (128 as u8) == (128 as u8); 	
-		let length = tail.len() + (if most_significant_byte_positive { 1 } else { 0 });
-			
-		//first write the length as u32, BigEndian	
-		let mut length_bytes: Vec<u8> = Vec::new();
-		length_bytes.write_u32::<BigEndian>(length as u32)?;
-		stream.write_all(&length_bytes)?;
-		
-		if most_significant_byte_positive {
-			if sign == Sign::Plus {
-				stream.write(&[0 as u8])?;
-			} else {
-				stream.write(&[0xff as u8])?;
-			}
-		} 
-		
-		if sign == Sign::Minus {
-			for i in 0..tail.len() {
-				tail[i] ^= 255 as u8;
-			}
-			let tail_length = tail.len();
-			tail[tail_length - 1] += 1;
-		}	
-		
-		stream.write_all(&tail)?;
-		Ok(())
-	}
+pub fn write_mpint(stream: &mut Write, value: BigInt) -> Result<(), Error> {
+    if value == 0.to_bigint().unwrap() {
+        stream.write(&[0 as u8; 4])?;
+        Ok(())
+    } else {
+        let (sign, mut tail) = value.to_bytes_be();
+
+        /* RFC4251: If the most significant bit would be set for a positivce number, the number MUST be preceded by a zero byte. */
+        /* own comment: If the most significant bit in negative number is set, we need to preceed by a 80 (hex) byte*/
+        /* bottom line, no matter the sign, most significant byte set => one additional byte needed */
+        let most_significant_byte_positive: bool = tail[0] & (128 as u8) == (128 as u8);
+        let length = tail.len() + (if most_significant_byte_positive { 1 } else { 0 });
+
+        //first write the length as u32, BigEndian
+        let mut length_bytes: Vec<u8> = Vec::new();
+        length_bytes.write_u32::<BigEndian>(length as u32)?;
+        stream.write_all(&length_bytes)?;
+
+        if most_significant_byte_positive {
+            if sign == Sign::Plus {
+                stream.write(&[0 as u8])?;
+            } else {
+                stream.write(&[0xff as u8])?;
+            }
+        }
+
+        if sign == Sign::Minus {
+            for i in 0..tail.len() {
+                tail[i] ^= 255 as u8;
+            }
+            let tail_length = tail.len();
+            tail[tail_length - 1] += 1;
+        }
+
+        stream.write_all(&tail)?;
+        Ok(())
+    }
+}
+
+pub fn read_mpint(stream: &mut Read) -> Result<BigInt, Error> {
+    let mut length_bytes: Vec<u8> = Vec::new();
+    length_bytes.resize(size_of::<u32>(), 0);
+    stream.read_exact(&mut length_bytes)?;
+    let length = Cursor::new(length_bytes)
+        .read_u32::<BigEndian>()
+        .unwrap();
+
+    if length == 0 {
+        return Ok(0.to_bigint().unwrap());
+    }
+
+    let mut body: Vec<u8> = Vec::new();
+    body.resize(length as usize, 0);
+    stream.read_exact(&mut body)?;
+
+    let sign = if body[0] & (128 as u8) == (128 as u8) {
+        Sign::Minus
+    } else {
+        Sign::Plus
+    };
+
+    if sign == Sign::Minus {
+        for i in 0..body.len() {
+            body[i] ^= 255 as u8;
+        }
+        let body_length = body.len();
+        body[body_length - 1] += 1;
+    }
+
+	let res = BigInt::from_bytes_be(sign, &body);
+	
+	Ok(res)
 }
 
 #[cfg(test)]
@@ -204,46 +239,75 @@ mod tests {
         write_boolean(&mut mws, true).unwrap();
         assert_eq!(mws.output, vec![0 as u8, 1]);
     }
-    
+
     #[test]
     fn write_mpint_works() {
-    	//these tests are copied examples from RFC4251, page 10
-    	{
-    		let mut mws = MockWriteStream::new();
-    		write_mpint(&mut mws, 0.to_bigint().unwrap()).unwrap();
-    		assert_eq!(mws.output, vec![0 as u8; 4]);    		
-    	}
-    	
-    	{
-    		let mut mws = MockWriteStream::new();
-    		let biguint : BigUint = BigUint::parse_bytes(b"9a378f9b2e332a7", 16).unwrap();
-    		write_mpint(&mut mws, biguint.to_bigint().unwrap()).unwrap();
-    		assert_eq!(mws.output, vec![0 as u8, 0, 0, 0x08, 0x09, 0xa3, 0x78, 0xf9, 0xb2, 0xe3, 0x32, 0xa7]);
-    	}
-    	
-    	{
-    		let mut mws = MockWriteStream::new();
-    		let biguint : BigUint = BigUint::parse_bytes(b"80", 16).unwrap();
-    		write_mpint(&mut mws, biguint.to_bigint().unwrap()).unwrap();
-    		assert_eq!(mws.output, vec![0 as u8, 0, 0, 0x02, 0x00, 0x80]);
-    	}
-    	
-    	{
-    		let mut mws = MockWriteStream::new();
-    		let bigint : BigInt = BigInt::parse_bytes(b"-1234", 16).unwrap();
-    		println!("{}", bigint);
-    		let (sign, tail) = bigint.to_bytes_be();
-    		println!("{:?}", tail);
-    		write_mpint(&mut mws, bigint).unwrap();
-    		assert_eq!(mws.output, vec![0 as u8, 0, 0, 0x02, 0xed, 0xcc]);
-    	}
-    	
-    	{
-    		let mut mws = MockWriteStream::new();
-    		let bigint : BigInt = BigInt::parse_bytes(b"-deadbeef", 16).unwrap();
-    		write_mpint(&mut mws, bigint).unwrap();
-    		assert_eq!(mws.output, vec![0 as u8, 0, 0, 0x05, 0xff, 0x21, 0x52, 0x41, 0x11]);
-    	}
-    }
+        //these tests are copied examples from RFC4251, page 10
+        {
+            let mut mws = MockWriteStream::new();
+            write_mpint(&mut mws, 0.to_bigint().unwrap()).unwrap();
+            assert_eq!(mws.output, vec![0 as u8; 4]);
+        }
 
+        {
+            let mut mws = MockWriteStream::new();
+            let biguint: BigUint = BigUint::parse_bytes(b"9a378f9b2e332a7", 16).unwrap();
+            write_mpint(&mut mws, biguint.to_bigint().unwrap()).unwrap();
+            assert_eq!(mws.output,
+                       vec![0 as u8, 0, 0, 0x08, 0x09, 0xa3, 0x78, 0xf9, 0xb2, 0xe3, 0x32, 0xa7]);
+        }
+
+        {
+            let mut mws = MockWriteStream::new();
+            let biguint: BigUint = BigUint::parse_bytes(b"80", 16).unwrap();
+            write_mpint(&mut mws, biguint.to_bigint().unwrap()).unwrap();
+            assert_eq!(mws.output, vec![0 as u8, 0, 0, 0x02, 0x00, 0x80]);
+        }
+
+        {
+            let mut mws = MockWriteStream::new();
+            let bigint: BigInt = BigInt::parse_bytes(b"-1234", 16).unwrap();
+            println!("{}", bigint);
+            let (sign, tail) = bigint.to_bytes_be();
+            println!("{:?}", tail);
+            write_mpint(&mut mws, bigint).unwrap();
+            assert_eq!(mws.output, vec![0 as u8, 0, 0, 0x02, 0xed, 0xcc]);
+        }
+
+        {
+            let mut mws = MockWriteStream::new();
+            let bigint: BigInt = BigInt::parse_bytes(b"-deadbeef", 16).unwrap();
+            write_mpint(&mut mws, bigint).unwrap();
+            assert_eq!(mws.output,
+                       vec![0 as u8, 0, 0, 0x05, 0xff, 0x21, 0x52, 0x41, 0x11]);
+        }
+    }
+    
+    #[test]
+	fn read_mpint_works() {
+        //these tests are copied examples from RFC4251, page 10
+        {
+            let mut mrs = MockReadStream::new(vec![0 as u8; 4]);
+            let bigint = read_mpint(&mut mrs).unwrap();
+            assert_eq!(bigint, BigInt::parse_bytes(b"0", 16).unwrap())
+        }
+
+        {
+            let mut mrs = MockReadStream::new(vec![0 as u8, 0, 0, 0x08, 0x09, 0xa3, 0x78, 0xf9, 0xb2, 0xe3, 0x32, 0xa7]);
+            let bigint = read_mpint(&mut mrs).unwrap();
+            assert_eq!(bigint, BigInt::parse_bytes(b"9a378f9b2e332a7", 16).unwrap())
+        }
+        
+        {
+            let mut mrs = MockReadStream::new(vec![0 as u8, 0, 0, 0x02, 0xed, 0xcc]);
+            let bigint = read_mpint(&mut mrs).unwrap();
+            assert_eq!(bigint, BigInt::parse_bytes(b"-1234", 16).unwrap())
+        }
+        
+        {
+            let mut mrs = MockReadStream::new(vec![0 as u8, 0, 0, 0x05, 0xff, 0x21, 0x52, 0x41, 0x11]);
+            let bigint = read_mpint(&mut mrs).unwrap();
+            assert_eq!(bigint, BigInt::parse_bytes(b"-deadbeef", 16).unwrap())
+        }
+    }
 }
