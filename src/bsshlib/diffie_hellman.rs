@@ -1,6 +1,5 @@
 use num::bigint::{BigUint, ToBigUint};
 
-
 //https://www.ietf.org/rfc/rfc2409.txt
 const OAKLEY_GROUP_2_PRIME_STR : &'static str = 
 		"FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1
@@ -34,4 +33,5 @@ pub fn get_oakley_group14_prime() -> BigUint {
 	let text = OAKLEY_GROUP_14_PRIME_STR.replace(char::is_whitespace, "");
 	
 	BigUint::parse_bytes(text.into_bytes().as_slice(), 16).unwrap()
-}      
+}
+      

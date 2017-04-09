@@ -143,6 +143,10 @@ pub fn read_mpint(stream: &mut Read) -> Result<BigInt, Error> {
         return Ok(0.to_bigint().unwrap());
     }
 
+    if length > MAX_BUFFER_LENGTH {
+        return Err(Error::new(ErrorKind::Other, errors::BSSH_ERR_BUFFER_CAPACITY_EXCEEDED));
+    }
+
     let mut body: Vec<u8> = Vec::new();
     body.resize(length as usize, 0);
     stream.read_exact(&mut body)?;
@@ -161,9 +165,9 @@ pub fn read_mpint(stream: &mut Read) -> Result<BigInt, Error> {
         body[body_length - 1] += 1;
     }
 
-	let res = BigInt::from_bytes_be(sign, &body);
-	
-	Ok(res)
+    let res = BigInt::from_bytes_be(sign, &body);
+
+    Ok(res)
 }
 
 #[cfg(test)]
@@ -282,9 +286,9 @@ mod tests {
                        vec![0 as u8, 0, 0, 0x05, 0xff, 0x21, 0x52, 0x41, 0x11]);
         }
     }
-    
+
     #[test]
-	fn read_mpint_works() {
+    fn read_mpint_works() {
         //these tests are copied examples from RFC4251, page 10
         {
             let mut mrs = MockReadStream::new(vec![0 as u8; 4]);
@@ -293,19 +297,21 @@ mod tests {
         }
 
         {
-            let mut mrs = MockReadStream::new(vec![0 as u8, 0, 0, 0x08, 0x09, 0xa3, 0x78, 0xf9, 0xb2, 0xe3, 0x32, 0xa7]);
+            let mut mrs = MockReadStream::new(vec![0 as u8, 0, 0, 0x08, 0x09, 0xa3, 0x78, 0xf9,
+                                                   0xb2, 0xe3, 0x32, 0xa7]);
             let bigint = read_mpint(&mut mrs).unwrap();
             assert_eq!(bigint, BigInt::parse_bytes(b"9a378f9b2e332a7", 16).unwrap())
         }
-        
+
         {
             let mut mrs = MockReadStream::new(vec![0 as u8, 0, 0, 0x02, 0xed, 0xcc]);
             let bigint = read_mpint(&mut mrs).unwrap();
             assert_eq!(bigint, BigInt::parse_bytes(b"-1234", 16).unwrap())
         }
-        
+
         {
-            let mut mrs = MockReadStream::new(vec![0 as u8, 0, 0, 0x05, 0xff, 0x21, 0x52, 0x41, 0x11]);
+            let mut mrs = MockReadStream::new(vec![0 as u8, 0, 0, 0x05, 0xff, 0x21, 0x52, 0x41,
+                                                   0x11]);
             let bigint = read_mpint(&mut mrs).unwrap();
             assert_eq!(bigint, BigInt::parse_bytes(b"-deadbeef", 16).unwrap())
         }

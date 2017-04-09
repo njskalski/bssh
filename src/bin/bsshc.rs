@@ -39,6 +39,9 @@ fn connect() -> Result<(), Box<error::Error + Send + Sync>> {
 	
 	println!("{}", &ret_kex_message.available_algorithm_set as &config::AvailableAlgorithms);
 
+	//diffie-hellman
+
+
     stream.shutdown(Shutdown::Both)?;
 
     Ok(())

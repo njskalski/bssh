@@ -11,3 +11,6 @@ pub const BSSH_ERR_MALFORMED_NAME_LIST              : &'static str = "Malformed 
 
 pub const BSSH_ERR_EXPECTED_KEX_MSG_INIT			: &'static str = "Error while processing key exchange packet: expected KEX_MSG_INIT in header";
 pub const BSSH_ERR_EXPECTED_ZERO_U32				: &'static str = "Error while processing key exchange packet: expected 0 (u32) at the end of message";
+
+pub const BSSH_DH_ERR_EXPECTED_KEXDH_INIT			: &'static str = "Error in kex exchange: expected KEXDH_INIT.";
+pub const BSSH_DH_ERR_NEGATIVE_E					: &'static str = "Error in kex exchange: e number is negative!";

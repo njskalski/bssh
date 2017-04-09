@@ -24,3 +24,8 @@ pub const SSH_MSG_CHANNEL_CLOSE             : u8 =  97;
 pub const SSH_MSG_CHANNEL_REQUEST           : u8 =  98;
 pub const SSH_MSG_CHANNEL_SUCCESS           : u8 =  99;
 pub const SSH_MSG_CHANNEL_FAILURE           : u8 = 100;
+
+//https://www.rfc-editor.org/errata_search.php?rfc=4253
+
+pub const SSH_MSG_KEXDH_INIT				: u8 = 30;
+pub const SSH_MSG_KEXDH_REPLY				: u8 = 31;

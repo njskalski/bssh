@@ -5,6 +5,8 @@ use config::AvailableAlgorithms;
 use errors;
 use numbers;
 use io_helpers;
+use num::BigUint;
+use num::bigint::ToBigInt;
 
 const MAX_BUFFER_LENGTH: usize = 255; //RFC 4253 page 5
 const MAX_COMMENT_LINES: usize = 100; //TODO arbitrary value
@@ -174,6 +176,32 @@ pub fn read_kex_init_message(stream : &mut Read) -> Result<KexMessage, Error> {
 	};
 	Ok(kex_message)
 }
+
+pub fn write_kexdh_init_message(stream : &mut Write, e : BigUint) -> Result<(), Error> {
+	stream.write(&[numbers::SSH_MSG_KEXDH_INIT])?;	
+	io_helpers::write_mpint(stream, e.to_bigint().unwrap())?;	
+	Ok(())
+}
+
+pub fn read_kexdh_init_message(stream : &mut Read) -> Result<BigUint, Error> {
+	let mut init_byte : [u8; 1] = [0; 1];
+	stream.read_exact(&mut init_byte)?;
+	
+	if init_byte[0] != numbers::SSH_MSG_KEXDH_INIT {
+		return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_DH_ERR_EXPECTED_KEXDH_INIT));
+	}
+	
+	let e = io_helpers::read_mpint(stream)?;
+	
+	let positive_e = match e.to_biguint() {
+		Some(positive_e) => positive_e,
+		None => return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_DH_ERR_NEGATIVE_E)) 
+	};
+	
+	Ok(positive_e)
+}
+
+
 
 #[cfg(test)]
 mod tests {
