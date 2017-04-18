@@ -1,15 +1,15 @@
-use std::mem;
 use std::io::{Cursor, Error, ErrorKind, Read};
 use rand;
 use errors;
 use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
+use mac;
 
 const MAX_PACKET_LENGTH : usize = 4*1024*1024; //TODO arbitrary value, probably too large
 
-pub fn get_packet_from_payload(payload: &mut Vec<u8>, cipher_block_size : Option<u8>) -> Result<Vec<u8>, Error> {
+pub fn get_packet_from_payload(payload: &mut Vec<u8>, cipher_block_size : Option<u8>, enable_mac : bool, sequence_number : u32) -> Result<Vec<u8>, Error> {
     let mut result: Vec<u8> = Vec::new();
 
-    let packet_length_without_random = 1 + payload.len();
+    let packet_length_without_random = 4 + 1 + payload.len(); //TODO this 4+ is not according to protocol, but gets openssh working
     //TODO this is ad-hoc formula
     let alignment : u8 = match cipher_block_size {
     	Some(size) => size,
@@ -19,7 +19,8 @@ pub fn get_packet_from_payload(payload: &mut Vec<u8>, cipher_block_size : Option
     let min_padding_length: u8 = alignment - ((packet_length_without_random % alignment as usize) as u8);
 
 	//RFC 4253 page 8 "there MUST be at least four bytes of padding"
-	let padding_length = if min_padding_length >= 4 { min_padding_length } else {min_padding_length + alignment};
+	let padding_length : u8 = if min_padding_length >= 4 { min_padding_length } else {min_padding_length + alignment};
+	println!("min_padding {}, alignment {}, padding_length {}", min_padding_length, alignment, padding_length);
 
     let mut random_padding: Vec<u8> = Vec::new();
     random_padding.reserve(padding_length as usize);
@@ -29,14 +30,21 @@ pub fn get_packet_from_payload(payload: &mut Vec<u8>, cipher_block_size : Option
 
 	//packet_length - not including 'mac' or the 'packet_length' itself.
 	let packet_length : usize = 1 + payload.len() + random_padding.len();
-	//println!("writing packet_length {}", packet_length);
+	println!("writing packet_length {}", packet_length);
     result.write_u32::<BigEndian>(packet_length as u32)?;
     result.push(padding_length);
     //println!("writing padding_length {}", padding_length);
     result.append(payload);
     result.append(&mut random_padding);
 
-    //TODO MAC
+    //TODO hardcoded sha1mac
+	if enable_mac {
+		let mut all : Vec<u8> = Vec::new();
+		all.write_u32::<BigEndian>(sequence_number)?;
+		all.append(result.clone().as_mut());
+		let mut mac = mac::hmac_sha1(&mut all).as_bytes().to_vec();
+		result.append(&mut mac);
+	}
 
     Ok(result)
 }
