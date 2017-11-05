@@ -1,0 +1,9 @@
+This implementation is a work in progress (when I have time). The plan is to
+implement base protocol as defined in RFC, plus one or more most popular 
+extensions provided by OpenSSH (as original authentication methods are
+considered obsolete). I plan to implement OpenSSH's config file format in proper
+time, but will not follow the output/logging/debug formats.
+
+At this time, client and server programs are not functional, and for testing
+purposes only. Main development effort happens in bsshlib.
+
