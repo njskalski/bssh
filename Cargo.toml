@@ -11,4 +11,4 @@ path = "src/bsshlib/lib.rs"
 byteorder = "1"
 rand = "0.3" #TODO to be removed
 num = "0.1"
-sha1 = "0.2.0"
+sha-1 = "0.7.0"

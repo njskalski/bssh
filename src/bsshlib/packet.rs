@@ -15,7 +15,7 @@ pub fn get_packet_from_payload(payload: &mut Vec<u8>, cipher_block_size : Option
     	Some(size) => size,
     	None => 8 //rfc4253 on random padding
     };
-    
+
     let min_padding_length: u8 = alignment - ((packet_length_without_random % alignment as usize) as u8);
 
 	//RFC 4253 page 8 "there MUST be at least four bytes of padding"
@@ -42,7 +42,7 @@ pub fn get_packet_from_payload(payload: &mut Vec<u8>, cipher_block_size : Option
 		let mut all : Vec<u8> = Vec::new();
 		all.write_u32::<BigEndian>(sequence_number)?;
 		all.append(result.clone().as_mut());
-		let mut mac = mac::hmac_sha1(&mut all).as_bytes().to_vec();
+		let mut mac = mac::hmac_sha1(&all);
 		result.append(&mut mac);
 	}
 
@@ -54,27 +54,27 @@ pub fn read_packet_from_stream(stream : &mut Read, cipher_block_size : Option<u8
     	Some(size) => size,
     	None => 4
     };
-	
+
 	let mut length_buffer : Vec<u8> = Vec::new();
 	length_buffer.resize(read_to_determine_packet_length as usize, 0 as u8);
 	stream.read_exact(&mut length_buffer)?;
-	
+
 	//TODO here some decoding takes place?
 	let packet_length : u32 = Cursor::new(length_buffer[0..4].to_vec()).read_u32::<BigEndian>()?; //TODO this is horrible
 	//println!("reading packet_length = {}", packet_length);
-	
+
 	if packet_length as usize > MAX_PACKET_LENGTH {
 		return Err(Error::new(ErrorKind::InvalidData, errors::BSSH_ERR_BUFFER_CAPACITY_EXCEEDED)); //TODO better message?
 	}
-	
+
 	//TODO if there is a remainder of what has been read except the length_buffer, this needs to be transfered here
-	
+
 	//read padding_length
 	let mut padding_length_buf : [u8; 1] = [0; 1];
 	stream.read(&mut padding_length_buf)?;
 	let padding_length : u8 = padding_length_buf[0];
 	//println!("reading padding_length = {}", padding_length);
-	
+
 	let mut buffer : Vec<u8> = Vec::new();
 	buffer.resize((packet_length - 1) as usize, 0); // -1 stands for padding_length which is read before
 	stream.read_exact(&mut buffer)?;
