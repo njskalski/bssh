@@ -24,7 +24,7 @@ if os.path.exists(openssh_repo_path):
     assert 0 == os.system("git pull")
     os.chdir(dir_path)
 else:
-    assert 0 == os.system("git clone " + openssh-portable-repo), "unable to checkout openssh-portable, necessary for compatibility testing."
+    assert 0 == os.system("git clone " + openssh_portable_repo), "unable to checkout openssh-portable, necessary for compatibility testing."
 
 os.chdir(openssh_repo_path)
 
